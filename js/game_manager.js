@@ -23,8 +23,8 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
 }
 
 GameManager.prototype.generateStartFen = function(){
-  //return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-  return "6k1/p1b1rppp/1pn5/3R4/2PP4/3BBQ2/P3KPP1/7q w - - 0 22";
+  return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+  //return "6k1/p1b1rppp/1pn5/3R4/2PP4/3BBQ2/P3KPP1/7q w - - 0 22";
 };
 
 GameManager.prototype.generateMoves = function(){
@@ -37,7 +37,10 @@ GameManager.prototype.fromFen = function(fen){
   return true;
 };
 
-
+GameManager.prototype.checkMoveInMoves = function(move,moves){
+  //TODO check if move in moves
+  return false;
+};
 
 
 // Set up the game
@@ -72,7 +75,7 @@ GameManager.prototype.setLeagalMoves = function(moves){
 };
 
 GameManager.prototype.checkMove = function(move){
-  return true;
+  return this.grid.checkMove(move);
 };
 
 GameManager.prototype.switchPlayer = function(){
