@@ -1,0 +1,34 @@
+ 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml"> 
+<head> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+<title>完美拖拽</title> 
+<style type="text/css"> 
+</style> 
+<script type="text/javascript"> 
+var re = /[R|N|B|K|Q]?[a-h|]??[1-8]??[x|-]?[a-h][1-8]/;
+var r = /^([PRNBKQ]?)([a-h|]?)([1-8]?)([x|-]?)([a-h])([1-8])(=Q|=N|\=R|\=B?)/
+
+var m = RegExp.$9;
+
+a="";
+alert(typeof(a&&a[1]));
+
+// alert(r.test("Pa-a8=Q+"));
+
+// alert(RegExp.$1);//R
+// alert(RegExp.$2);//a
+// alert(RegExp.$3);//1
+// alert(RegExp.$4);//x
+// alert(RegExp.$5);//a
+// alert(RegExp.$6);//2
+// alert(RegExp.$7);//=R
+// alert(RegExp.$8);
+</script> 
+</head> 
+<body> 
+<div id="box"> 
+</div> 
+</body> 
+</html> 
