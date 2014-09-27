@@ -14,9 +14,9 @@ Grid.prototype.initialize = function(fen){
   var atts = fen.replace(/(s*$)/g, "").split(" ");
   this.activeColor = atts[1];
   this.castling = atts[2];
-  this.enpass = atts[3] == "-" ? 0 :parseInt(atts[3]);
-  this.nhalfmove = parseInt(atts[4]);
-  this.nfullmove = parseInt(atts[5]);
+  this.enpass = atts[3];
+  this.nhalfmove = parseInt(atts[4]) || 0;
+  this.nfullmove = parseInt(atts[5]) || 0;
 
   return true;
 };
@@ -132,6 +132,55 @@ Grid.prototype._isOccupiedByColor = function(color,ij){
     return /[prnbkq]/.test(value);
 };
 
+Grid.prototype._isOccupied = function(ij){
+  return !!this.getCellValue(ij);
+};
+
+
+Grid.prototype._checkAttackP = function(color,ij1,ij2){
+  if (ij1 === ij2) return false;
+
+  var i1 = ij1.i;
+  var j1 = ij1.j;
+  var i2 = ij2.i;
+  var j2 = ij2.j;
+
+  if (Math.abs(j2-j1) == 1){
+
+    if (color == "w" && i2-i1 == -1)
+      return true;
+
+    if (color == "b" && i2-i1==1) 
+      return true;
+  }
+  return false;
+};
+
+Grid.prototype._checkAttackR = function(color,ij1,ij2){
+  return this._checkMoveR(color,ij1,ij2);
+};
+
+Grid.prototype._checkAttackN = function(color,ij1,ij2){
+  return this._checkMoveN(color,ij1,ij2);
+};
+
+Grid.prototype._checkAttackB = function(color,ij1,ij2){
+  return this._checkMoveB(color,ij1,ij2);
+};
+
+Grid.prototype._checkAttackQ = function(color,ij1,ij2){
+  return this._checkMoveQ(color,ij1,ij2);
+};
+
+Grid.prototype._checkAttackK = function(color,ij1,ij2){
+  if (ij1 === ij2) return false;
+
+  var dis = this._distance2(ij1,ij2);
+  if (!this._isOccupiedByColor(color,ij2) && (dis == 1 || dis == 2))
+    return true;
+  return false;
+};
+
 
 Grid.prototype._checkMoveQ = function(color,ij1,ij2){
   return this._checkMoveR(color,ij1,ij2) || this._checkMoveB(color,ij1,ij2);
@@ -149,17 +198,21 @@ Grid.prototype._checkMoveP = function(color,ij1,ij2){
     if (color == "w" && (i2-i1 == -1 || (i1 == 6) && i2-i1 == -2) || 
         color == "b" && (i2-i1 == 1  || (i1 == 1) && i2-i1 == 2)  ){
 
-      if (this._isOccupiedByColor(color,ij2))
+      // if (this._isOccupiedByColor(color,ij2))
+      //   return false;
+
+      if (this._isOccupied(ij2))
         return false;
 
-      console.log("check pown move passed");
       return true;
     }
   }else if (Math.abs(j2-j1) == 1){
-    //TODO  take care of en passant target square
-      if (this._isOccupiedByColor(color,ij2))
-        return false;
-    return false;
+
+    if (color == "w" && i2-i1 == -1 && (this._isOccupiedByColor("b",ij2) ||this.positionTranslateIJ2XY(ij2).x == this.enpass[0]) )
+      return true;
+
+    if (color == "b" && i2-i1==1 && (this._isOccupiedByColor("w",ij2) || this.positionTranslateIJ2XY(ij2).x ==this.enpass[0]) ) 
+      return true;
   }
   return false;
 };
@@ -305,6 +358,65 @@ Grid.prototype.checkMove = function(move){
   return false;
 };
 
+
+Grid.prototype.cellIsUnderAttack = function(xy){
+  console.log("check under attack: "+ xy.x+xy.y);
+  var ij2 = this.positionTranslateXY2IJ(xy);
+  var color = this.activeColor;
+
+  var oppoent = "";
+  var oppcolor = "";
+  if (color == "w"){
+    oppoent = /[prnbkq]/;
+    oppcolor = "b";
+  }else{
+    oppoent = /[PRNBKQ]/;
+    oppcolor = "w";
+  }
+
+  for (var i = 0; i < this.size; i++) {
+    for (var i = 0; y < this.size; i++) {
+      var ij1 = {i:i,j:j};
+
+      var value = "";
+      if (this.cells[i][j])
+        value = this.cells[i][j].value;
+
+      if (oppoent.test(value)){
+        value = value.toLowerCase();
+
+        switch(value){
+          case "p":
+          this.attackfn = this._checkAttckP;
+          break;
+          case "r":
+          this.attackfn = this._checkAttackR;
+          break;
+          case "n":
+          this.attackfn = this._checkAttackN;
+          break;
+          case "b":
+          this.attackfn = this._checkAttackB;
+          break;
+          case "q":
+          this.attackfn = this._checkAttackQ;
+          break;
+          case "k":
+          this.attackfn = this._checkAttackK;
+          break;
+        }
+
+        if(this.attackfn(oppcolor,ij1,ij2)){
+          alert(xy.x+xy.y + " is under attck");
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+};
+
 Grid.prototype.kingUnderAttackAfterMove = function(move){
   //TODO ...
   return false;
@@ -319,28 +431,82 @@ Grid.prototype.move = function(move){
   var ij2 = this.positionTranslateXY2IJ(xy2);
   var i2 = ij2.i;j2 = ij2.j;
 
+
+  //check half move
+  if ( /[Pp]/.test(this.getCellValue(ij1)) || this._isOccupied(ij2)) 
+    this.nhalfmove = 0;
+  else
+    this.nhalfmove +=1;
+
+  //set enpass default
+  this.enpass = "-";
+
+  //check enpass
+  if (this.getCellValue(ij1) == "P" && Math.abs(i2-i1) == 2 && 
+      (this.getCellValue({i:ij2.i,j:ij2.j-1}) == "p" || this.getCellValue({i:ij2.i,j:ij2.j+1}))){
+    this.enpass = xy2.x+(xy2.y-1);
+    console.log("enpass:   " + this.enpass);
+  }
+  if (this.getCellValue(ij1) == "p" && Math.abs(i2-i1) == 2 ){
+    this.enpass = xy2.x+(xy2.y+1);
+    console.log("enpass    " + this.enpass);
+  }
+
+  //TODO check castling
+  //if (this.getCellValue(ij1) == "R" && xy1=={x:})
+
+  //enpass pown
+  if ( /[Pp]/.test(this.getCellValue(ij1)) && j1!=j2){
+    if(this.getCellValue(ij1) == "P"){
+      this.cells[i2+1][j2] = null;
+    } 
+    else
+      this.cells[i2-1][j2] = null;
+  }
+
+  //castling
+  if (this.getCellValue(ij1) == "K"){
+    if (this.castling.indexOf("K")>=0 && xy2=={x:"f",y:1}){
+      //rook at {x:"a",y:"8"}
+      this.cells[7][7] = null;
+      this.cells[7][5] = new Tile({x:"f",y:1},"R");
+    }else if (this.castling.indexOf("Q")>=0 && xy2=={x:"c",y:1}){
+      this.cells[7][0] = null;
+      this.cells[7][3] = new Tile({x:"d",y:1},"R");
+    }
+  }
+
+  if (this.getCellValue(ij1) == "k"){
+    if (this.castling.indexOf("k")>=0 && xy2=={x:"f",y:8}){
+      //rook at {x:"a",y:"8"}
+      this.cells[0][7] = null;
+      this.cells[0][5] = new Tile({x:"f",y:8},"r");
+    }else if (this.castling.indexOf("q")>=0 && xy2=={x:"c",y:8}){
+      this.cells[0][0] = null;
+      this.cells[0][3] = new Tile({x:"d",y:8},"r");
+    }
+  }
+
+
+  //pown promotion
   var value = this.cells[i1][j1].value;
-  if (move.length >4)
+  if (move.length >4 && /[Pp]/.test(this.getCellValue(ij1)))
     value = move[4];
     if (this.activeColor === "w")
       value = value.toUpperCase();
 
- 
+
+ //normal move
   this.cells[i2][j2] = new Tile(xy2,value);
   if (! (i1 == i2 && j1 ==j2))
     this.cells[i1][j1] = null;
 
+  //change state
   if (this.activeColor === "w")
     this.nfullmove += 1;
-
-  //TODO add this.nhalfmove
-  //TODO check enpass
-  //TODO check castling
-
   this.switchPlayer();
   this.lastmove = move;
 };
-
 
 Grid.prototype.switchPlayer = function(){
   if(this.activeColor == "w")

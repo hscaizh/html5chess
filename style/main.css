@@ -612,6 +612,11 @@ hr {
   -moz-transform: translate(437.5px, 437.5px);
   transform: translate(437.5px, 437.5px); }
 
+.tile.tilehint{
+    background: url(img/mark.png);
+    background-size: cover; 
+}
+
 .tile {
   position: absolute;
   -webkit-transition: 100ms ease-in-out;

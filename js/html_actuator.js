@@ -66,12 +66,16 @@ HTMLActuator.prototype.addTile = function (tile) {
 
   inner.classList.add("tile-inner");
   //inner.textContent = tile.value;
-  console.log("debug  "+this.player.color);
+  // console.log("debug  "+this.player.color);
   if(this.player.active){
     if (/^[a-z]+$/.test(tile.value) && this.player.color == "b"  || /^[A-Z]+$/.test(tile.value) && this.player.color == "w" ){
       classes.push("tile-active");
       this.drag(wrapper);
     }
+  }
+
+  if (this.grid.cellIsUnderAttack({x:tile.x,y:tile.y})){
+    classes.push("tilehint");
   }
   this.applyClasses(wrapper, classes);
 
@@ -161,6 +165,7 @@ HTMLActuator.prototype.drag = function(oDrag) {
     var maxT = totalwidth -trantop-500/8;
     var iL = 0;
     var iT = 0;
+    oTemp.style.zIndex+=1;
 
     document.onmousemove = function(event) {
       var event = event || window.event;
