@@ -61,7 +61,7 @@ GameManager.prototype.setup = function () {
 // Sends the updated grid to the actuator
 GameManager.prototype.actuate = function () {
   this.activePlayer.activate();
-
+  //this.actuator.hintAllUnderAttack();
   this.actuator.actuate(this,this.activePlayer, {
     score:      this.score,
     player:     this.activePlayer,

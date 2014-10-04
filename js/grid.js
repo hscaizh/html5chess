@@ -136,9 +136,14 @@ Grid.prototype._isOccupied = function(ij){
   return !!this.getCellValue(ij);
 };
 
+Grid.prototype.isOccupiedXY = function(xy){
+  return this._isOccupied(this.positionTranslateXY2IJ(xy));
+}
+
 
 Grid.prototype._checkAttackP = function(color,ij1,ij2){
-  if (ij1 === ij2) return false;
+  if (this.samePosition(ij1,ij2))
+   return false;
 
   var i1 = ij1.i;
   var j1 = ij1.j;
@@ -173,7 +178,7 @@ Grid.prototype._checkAttackQ = function(color,ij1,ij2){
 };
 
 Grid.prototype._checkAttackK = function(color,ij1,ij2){
-  if (ij1 === ij2) return false;
+  if (this.samePosition(ij1,ij2)) return false;
 
   var dis = this._distance2(ij1,ij2);
   if (!this._isOccupiedByColor(color,ij2) && (dis == 1 || dis == 2))
@@ -187,9 +192,7 @@ Grid.prototype._checkMoveQ = function(color,ij1,ij2){
 };
 
 Grid.prototype._checkMoveP = function(color,ij1,ij2){
-
-  if (ij1 === ij2) return false;
-
+  if (this.samePosition(ij1,ij2)) return false;
   var i1 = ij1.i;
   var j1 = ij1.j;
   var i2 = ij2.i;
@@ -217,8 +220,12 @@ Grid.prototype._checkMoveP = function(color,ij1,ij2){
   return false;
 };
 
+Grid.prototype.samePosition = function(ijxy1,ijxy2){
+  return ijxy1.i == ijxy2.i && ijxy1.j == ijxy2.j && ijxy1.x == ijxy2.x && ijxy1.y == ijxy2.y;
+};
+
 Grid.prototype._checkMoveR = function(color,ij1,ij2){
-  if (ij1 === ij2) return false;
+  if (this.samePosition(ij1,ij2)) return false;
 
   var i1 = ij1.i;
   var j1 = ij1.j;
@@ -255,7 +262,7 @@ Grid.prototype._checkMoveR = function(color,ij1,ij2){
 };
 
 Grid.prototype._checkMoveN = function(color,ij1,ij2){
-  if (ij1 === ij2) return false;
+  if (this.samePosition(ij1,ij2)) return false;
   var dis = this._distance2(ij1,ij2);
   if (!this._isOccupiedByColor(color,ij2) && (dis == 5))
     return true;
@@ -263,7 +270,7 @@ Grid.prototype._checkMoveN = function(color,ij1,ij2){
 };
 
 Grid.prototype._checkMoveB = function(color,ij1,ij2){
-  if (ij1 === ij2) return false;
+  if (this.samePosition(ij1,ij2)) return false;
   var i1 = ij1.i;
   var j1 = ij1.j;
   var i2 = ij2.i;
@@ -289,11 +296,63 @@ Grid.prototype._checkMoveB = function(color,ij1,ij2){
 };
 
 Grid.prototype._checkMoveK = function(color,ij1,ij2){
-  if (ij1 === ij2) return false;
+  if (this.samePosition(ij1,ij2)) return false;
 
   var dis = this._distance2(ij1,ij2);
   if (!this._isOccupiedByColor(color,ij2) && (dis == 1 || dis == 2))
     return true;
+
+  var xy1 = this.positionTranslateIJ2XY(ij1);
+  var xy2 = this.positionTranslateIJ2XY(ij2);
+
+  if(this.castling.indexOf("Q") >= 0
+  && color == "w" 
+  && this.samePosition(xy1,{x:"e",y:1}) 
+  && this.samePosition(xy2,{x:"c",y:1})
+  && !this.isOccupiedXY({x:"d",y:1})
+  && !this.isOccupiedXY({x:"c",y:1})
+  && !this.cellIsUnderAttack({x:"d",y:1})
+  && !this.cellIsUnderAttack({x:"c",y:1})
+  && !this.cellIsUnderAttack({x:"e",y:1}))
+    return true;
+
+
+  if(this.castling.indexOf("K") >= 0
+  && color == "w" 
+  && this.samePosition(xy1,{x:"e",y:1}) 
+  && this.samePosition(xy2,{x:"g",y:1})
+  && !this.isOccupiedXY({x:"f",y:1})
+  && !this.isOccupiedXY({x:"g",y:1})
+  && !this.cellIsUnderAttack({x:"f",y:1})
+  && !this.cellIsUnderAttack({x:"g",y:1})
+  && !this.cellIsUnderAttack({x:"e",y:1}))
+    return true;
+
+
+  if(this.castling.indexOf("q") >= 0
+  && color == "b" 
+  && this.samePosition(xy1,{x:"e",y:8}) 
+  && this.samePosition(xy2,{x:"c",y:8})
+  && !this.isOccupiedXY({x:"d",y:8})
+  && !this.isOccupiedXY({x:"c",y:8})
+  && !this.cellIsUnderAttack({x:"d",y:8})
+  && !this.cellIsUnderAttack({x:"c",y:8})
+  && !this.cellIsUnderAttack({x:"e",y:8}))
+    return true;
+
+
+  if(this.castling.indexOf("k") >= 0
+  && color == "b" 
+  && this.samePosition(xy1,{x:"e",y:8}) 
+  && this.samePosition(xy2,{x:"g",y:8})
+  && !this.isOccupiedXY({x:"f",y:8})
+  && !this.isOccupiedXY({x:"g",y:8})
+  && !this.cellIsUnderAttack({x:"f",y:8})
+  && !this.cellIsUnderAttack({x:"g",y:8})
+  && !this.cellIsUnderAttack({x:"e",y:8}))
+    return true;
+
+
   return false;
 };
 
@@ -360,9 +419,11 @@ Grid.prototype.checkMove = function(move){
 
 
 Grid.prototype.cellIsUnderAttack = function(xy){
-  console.log("check under attack: "+ xy.x+xy.y);
+  //return false;
+
   var ij2 = this.positionTranslateXY2IJ(xy);
   var color = this.activeColor;
+  
 
   var oppoent = "";
   var oppcolor = "";
@@ -373,21 +434,25 @@ Grid.prototype.cellIsUnderAttack = function(xy){
     oppoent = /[PRNBKQ]/;
     oppcolor = "w";
   }
+  if(this._isOccupiedByColor(oppcolor,ij2)) 
+    return false;
 
-  for (var i = 0; i < this.size; i++) {
-    for (var i = 0; y < this.size; i++) {
+  for (var i = 0; i < 8; i++) {
+    for (var j = 0; j < 8; j++) {
       var ij1 = {i:i,j:j};
-
       var value = "";
       if (this.cells[i][j])
         value = this.cells[i][j].value;
+      else
+        continue;
 
+      //console.log("check attack value" + value);
       if (oppoent.test(value)){
         value = value.toLowerCase();
 
         switch(value){
           case "p":
-          this.attackfn = this._checkAttckP;
+          this.attackfn = this._checkAttackP;
           break;
           case "r":
           this.attackfn = this._checkAttackR;
@@ -405,15 +470,12 @@ Grid.prototype.cellIsUnderAttack = function(xy){
           this.attackfn = this._checkAttackK;
           break;
         }
-
         if(this.attackfn(oppcolor,ij1,ij2)){
-          alert(xy.x+xy.y + " is under attck");
           return true;
         }
       }
     }
   }
-
   return false;
 };
 
@@ -456,7 +518,7 @@ Grid.prototype.move = function(move){
   //if (this.getCellValue(ij1) == "R" && xy1=={x:})
 
   //enpass pown
-  if ( /[Pp]/.test(this.getCellValue(ij1)) && j1!=j2){
+  if ( /[Pp]/.test(this.getCellValue(ij1)) && j1!=j2 && !this.getCellValue(ij2)){
     if(this.getCellValue(ij1) == "P"){
       this.cells[i2+1][j2] = null;
     } 
@@ -466,24 +528,26 @@ Grid.prototype.move = function(move){
 
   //castling
   if (this.getCellValue(ij1) == "K"){
-    if (this.castling.indexOf("K")>=0 && xy2=={x:"f",y:1}){
-      //rook at {x:"a",y:"8"}
+    if (this.castling.indexOf("K")>=0 && this.samePosition(xy2,{x:"g",y:1}) ){
       this.cells[7][7] = null;
       this.cells[7][5] = new Tile({x:"f",y:1},"R");
-    }else if (this.castling.indexOf("Q")>=0 && xy2=={x:"c",y:1}){
+      this.castling = this.castling.replace("K","");
+    }else if (this.castling.indexOf("Q")>=0 && this.samePosition(xy2,{x:"c",y:1})){
       this.cells[7][0] = null;
       this.cells[7][3] = new Tile({x:"d",y:1},"R");
+      this.castling = this.castling.replace("Q","");
     }
   }
 
   if (this.getCellValue(ij1) == "k"){
-    if (this.castling.indexOf("k")>=0 && xy2=={x:"f",y:8}){
-      //rook at {x:"a",y:"8"}
+    if (this.castling.indexOf("k")>=0 && this.samePosition(xy2,{x:"g",y:8})){
       this.cells[0][7] = null;
       this.cells[0][5] = new Tile({x:"f",y:8},"r");
-    }else if (this.castling.indexOf("q")>=0 && xy2=={x:"c",y:8}){
+      this.castling = this.castling.replace("k","");
+    }else if (this.castling.indexOf("q")>=0 && this.samePosition(xy2,{x:"c",y:8})){
       this.cells[0][0] = null;
       this.cells[0][3] = new Tile({x:"d",y:8},"r");
+      this.castling = this.castling.replace("q","");
     }
   }
 

@@ -1,36 +1,72 @@
-function HTMLActuator() {
+function HTMLActuator(game_manager) {
   this.tileContainer    = document.querySelector(".tile-container");
   this.scoreContainer   = document.querySelector(".score-container");
   this.bestContainer    = document.querySelector(".best-container");
   this.messageContainer = document.querySelector(".game-message");
 
   this.score = 0;
+  //this.hint = [];
 }
 
 
 
 HTMLActuator.prototype.actuate = function (game_manager,player,metadata) {
-  var self = this;
   this.gm = game_manager;
+  this.grid = this.gm.grid;
   this.player = player;
+  this.hints = [];
+  this.hintAllUnderAttack();
+  this.debugShowHint();
 
-  self.grid = this.gm.grid;
-  self.player = player;
+  self = this;
 
   window.requestAnimationFrame(function () {
+    self.debugShowHint();
     self.clearContainer(self.tileContainer);
-
-    self.grid.cells.forEach(function (column) {
-      column.forEach(function (cell) {
+    self.debugShowHint();
+    self.grid.cells.forEach(function (column,i) {
+      column.forEach(function (cell,j) {
         if (cell) {
           self.addTile(cell);
+        }else{
+          var xy = self.grid.positionTranslateIJ2XY({i:i,j:j});
+          self.addTile(new Tile(xy,""));
         }
       });
     });
 
   });
+  //this.debugShowHint();
+  //this.hints = [];
 };
 
+HTMLActuator.prototype.hintAllUnderAttack = function(){
+  for (var i = 0;i < 8;i++)
+    for (var j = 0;j<8;j++){
+      var xy = this.grid.positionTranslateIJ2XY({i:i,j:j});
+      if(this.grid.cellIsUnderAttack(xy))
+        this.addHintCells(xy)
+    }
+};
+
+
+HTMLActuator.prototype.addHintCells = function(xy){
+  this.hints.push(xy);
+};
+
+HTMLActuator.prototype.debugShowHint = function(){
+  for (var i = 0 ;i <this.hints.length;i++){
+    console.log(this.hints[i].x+this.hints[i].y);
+  }
+};
+
+HTMLActuator.prototype._inHintCells = function(xy){
+  for (var i = 0;i<this.hints.length;i++){
+    if(this.hints[i].x == xy.x && this.hints[i].y == xy.y)
+      return true;
+  }
+  return false;
+};
 
 HTMLActuator.prototype.showMove = function (move){
   //TODO
@@ -60,7 +96,7 @@ HTMLActuator.prototype.addTile = function (tile) {
   var positionClass = this.positionClass(position);
 
   // We can't use classlist because it somehow glitches when replacing classes
-  var classes = ["tile", "tile-" + tile.value, positionClass];
+  var classes = ["tile", positionClass];
 
   this.applyClasses(wrapper, classes);
 
@@ -74,13 +110,17 @@ HTMLActuator.prototype.addTile = function (tile) {
     }
   }
 
-  if (this.grid.cellIsUnderAttack({x:tile.x,y:tile.y})){
+  // Add the inner part of the tile to the wrapper
+  if (tile.value){
+     wrapper.appendChild(inner);
+     classes.push("tile-"+tile.value);
+  }
+
+  if (this._inHintCells({x:tile.x,y:tile.y})){
     classes.push("tilehint");
   }
-  this.applyClasses(wrapper, classes);
 
-  // Add the inner part of the tile to the wrapper
-  wrapper.appendChild(inner);
+  this.applyClasses(wrapper, classes);
   // Put the tile on the board
   this.tileContainer.appendChild(wrapper);
 };
