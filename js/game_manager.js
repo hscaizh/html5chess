@@ -33,7 +33,7 @@ GameManager.prototype.generateMoves = function(){
 
 GameManager.prototype.fromFen = function(fen){
   if (!this.grid.initialize(fen)) return false;
-  this.activePlayer = this.grid.activeColor == "w"?this.whitePlayer:this.blackPlayer;
+  this.activePlayer = this.grid.activeColor == "w" ? this.whitePlayer : this.blackPlayer;
   return true;
 };
 
@@ -79,10 +79,12 @@ GameManager.prototype.checkMove = function(move){
 };
 
 GameManager.prototype.switchPlayer = function(){
-  if (this.activePlayer.color == this.whitePlayer.color)
+  if (this.activePlayer.color == this.whitePlayer.color){
     this.activePlayer = this.blackPlayer;
-  else
+  }
+  else{
     this.activePlayer = this.whitePlayer;
+  }
 };
 
 
@@ -138,6 +140,15 @@ GameManager.prototype.serialize = function () {
 };
 
 // Save all tile positions and remove merger info
+
+
+GameManager.prototype.positionsEqual = function (first, second) {
+  return first.x === second.x && first.y === second.y;
+};
+
+
+/************************************************************************************/
+
 GameManager.prototype.prepareTiles = function () {
   this.grid.eachCell(function (x, y, tile) {
     if (tile) {
@@ -294,9 +305,3 @@ GameManager.prototype.tileMatchesAvailable = function () {
 
   return false;
 };
-
-GameManager.prototype.positionsEqual = function (first, second) {
-  return first.x === second.x && first.y === second.y;
-};
-
-

@@ -36,8 +36,6 @@ HTMLActuator.prototype.actuate = function (game_manager,player,metadata) {
     });
 
   });
-  //this.debugShowHint();
-  //this.hints = [];
 };
 
 HTMLActuator.prototype.hintAllUnderAttack = function(){
@@ -56,7 +54,7 @@ HTMLActuator.prototype.addHintCells = function(xy){
 
 HTMLActuator.prototype.debugShowHint = function(){
   for (var i = 0 ;i <this.hints.length;i++){
-    console.log(this.hints[i].x+this.hints[i].y);
+    //console.log(this.hints[i].x+this.hints[i].y);
   }
 };
 
@@ -142,43 +140,7 @@ HTMLActuator.prototype.positionClass = function (position) {
   position = this.normalizePosition(position);
   return "tile-position-" + position.y + "-" + position.x;
 };
-
-
-HTMLActuator.prototype.updateScore = function (score) {
-  this.clearContainer(this.scoreContainer);
-
-  var difference = score - this.score;
-  this.score = score;
-
-  this.scoreContainer.textContent = this.score;
-
-  if (difference > 0) {
-    var addition = document.createElement("div");
-    addition.classList.add("score-addition");
-    addition.textContent = "+" + difference;
-
-    this.scoreContainer.appendChild(addition);
-  }
-};
-
-HTMLActuator.prototype.updateBestScore = function (bestScore) {
-  this.bestContainer.textContent = bestScore;
-};
-
-HTMLActuator.prototype.message = function (won) {
-  var type    = won ? "game-won" : "game-over";
-  var message = won ? "You win!" : "Game over!";
-
-  this.messageContainer.classList.add(type);
-  this.messageContainer.getElementsByTagName("p")[0].textContent = message;
-};
-
-HTMLActuator.prototype.clearMessage = function () {
-  // IE only takes one value to remove at a time.
-  this.messageContainer.classList.remove("game-won");
-  this.messageContainer.classList.remove("game-over");
-};
-
+ 
 HTMLActuator.prototype.drag = function(oDrag) {
   var disX = dixY = 0;
   var player = this.player;
@@ -243,17 +205,27 @@ HTMLActuator.prototype.drag = function(oDrag) {
       moveStr = ""+x1+y1+x2+y2
       console.log(player.color+":  "+moveStr);
 
- //     iL = mx*totalwidth/8;
- //     iT = my*totalwidth/8;
- //     oTemp.style.left = iL + "px";
- //     oTemp.style.top = iT + "px";
       oDrag.releaseCapture && oDrag.releaseCapture();
 
+      var pownPromotion = false;
+      var c = "Q";
+
+      if ( /[Pp]/.test(grid.getCellValue({i:py,j:px})) && (y2 == "8" || y2 == "1")) {
+        pownPromotion = true;
+        moveStr += c;
+      }
 
       if (gm.checkMove(moveStr)){
+        if (pownPromotion){
+          c = prompt("pow promotion:Q,R,B,N");
+          c = /[QRBN]/.test(c) ? c : "Q";
+          moveStr = moveStr.substring(0,moveStr.length-1)
+          moveStr += c;
+          alert(moveStr);
+        }
         player.setMove(moveStr);
         player.notifyGM();
-      }else{
+      }else {
         var count=30;
         var timer = setInterval(function () {  
               count>=0 ? (oTemp.style.left = iL*(count/30) + "px", oTemp.style.top = iT*(count/30) + "px",count-=1) : clearInterval(timer) 
@@ -265,3 +237,41 @@ HTMLActuator.prototype.drag = function(oDrag) {
     return false
   }
 }
+
+/******************************************************************************/
+
+
+HTMLActuator.prototype.updateScore = function (score) {
+  this.clearContainer(this.scoreContainer);
+
+  var difference = score - this.score;
+  this.score = score;
+
+  this.scoreContainer.textContent = this.score;
+
+  if (difference > 0) {
+    var addition = document.createElement("div");
+    addition.classList.add("score-addition");
+    addition.textContent = "+" + difference;
+
+    this.scoreContainer.appendChild(addition);
+  }
+};
+
+HTMLActuator.prototype.updateBestScore = function (bestScore) {
+  this.bestContainer.textContent = bestScore;
+};
+
+HTMLActuator.prototype.message = function (won) {
+  var type    = won ? "game-won" : "game-over";
+  var message = won ? "You win!" : "Game over!";
+
+  this.messageContainer.classList.add(type);
+  this.messageContainer.getElementsByTagName("p")[0].textContent = message;
+};
+
+HTMLActuator.prototype.clearMessage = function () {
+  // IE only takes one value to remove at a time.
+  this.messageContainer.classList.remove("game-won");
+  this.messageContainer.classList.remove("game-over");
+};

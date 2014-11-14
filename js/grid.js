@@ -63,7 +63,7 @@ Grid.prototype.fromFen = function(fen){
       // number / empty squares
       if (row[j].search(/[1-8]/) !== -1) {
         var emptySquares = parseInt(row[j], 10);
-        for (var k = 0;k < emptySquares;k++){
+        for (var k = 0; k < emptySquares; k++){
           cells[i].push(null);
           colIndex++;
         }
@@ -105,7 +105,7 @@ Grid.prototype.normalize = function(pmove){
   re = /^([PRNBKQ]?)([a-h|]?)([1-8]?)([x|-]?)([a-h])([1-8])(=Q|=N|\=R|\=B?)/;
   if(re.test(pmove)){
     var m = RegExp.$1 || "P";
-    var x1 = RegExp.$2;
+    var x1 = RegExp.$2;u
     var y1 = RegExp.$3;
     var x2 = RegExp.$5;
     var y2 = RegExp.$6;
@@ -199,18 +199,13 @@ Grid.prototype._checkMoveP = function(color,ij1,ij2){
   var j2 = ij2.j;
   if (j1 == j2){
     if (color == "w" && (i2-i1 == -1 || (i1 == 6) && i2-i1 == -2) || 
-        color == "b" && (i2-i1 == 1  || (i1 == 1) && i2-i1 == 2)  ){
-
-      // if (this._isOccupiedByColor(color,ij2))
-      //   return false;
+        color == "b" && (i2-i1 == 1  || (i1 == 1) && i2-i1 == 2)) {
 
       if (this._isOccupied(ij2))
         return false;
-
       return true;
     }
   }else if (Math.abs(j2-j1) == 1){
-
     if (color == "w" && i2-i1 == -1 && (this._isOccupiedByColor("b",ij2) ||this.positionTranslateIJ2XY(ij2).x == this.enpass[0]) )
       return true;
 
@@ -405,12 +400,9 @@ Grid.prototype.checkMove = function(move){
     }
 
 
-    if(! this.checkfn(this.activeColor,ij1,ij2))
-      return false;
+    if(! this.checkfn(this.activeColor,ij1,ij2)) return false;
 
-    if(this.kingUnderAttackAfterMove(move))
-      //after move ,the king can't be under attack
-      return false;
+    if(this.kingIsUnderAttackAfterMove(move)) return false;
 
     return true;
   }
@@ -420,7 +412,6 @@ Grid.prototype.checkMove = function(move){
 
 Grid.prototype.cellIsUnderAttack = function(xy){
   //return false;
-
   var ij2 = this.positionTranslateXY2IJ(xy);
   var color = this.activeColor;
   
@@ -479,8 +470,51 @@ Grid.prototype.cellIsUnderAttack = function(xy){
   return false;
 };
 
-Grid.prototype.kingUnderAttackAfterMove = function(move){
-  //TODO ...
+function clone(obj){
+  if(!obj||"object" != typeof obj){
+    return null;
+  }
+  var result = (obj instanceof Array)?[]:{};
+  for(var i in obj){
+    result[i] = ("object" != typeof obj[i])?obj[i]:clone(obj[i]);
+  }
+  return result;
+};
+
+Grid.prototype.findKingPosition = function(color) {
+  var value = color == "w" ? "K" : "k";
+  for (var i = 0; i < 8; i++) {
+    for (var j = 0; j < 8; j++) {
+      var ij = {i:i,j:j};
+      var cvalue = "";
+      if (this.cells[i][j]){
+        cvalue = this.cells[i][j].value;
+      }
+
+      if (value == cvalue){
+        return ij;
+      }
+    }
+  }
+  return null;
+};
+
+Grid.prototype.kingIsUnderAttack = function(color){
+  //alert("position:"+this.findKingPosition(color).i+this.findKingPosition(color).j);
+  var ij = this.findKingPosition(color);
+  var xy = this.positionTranslateIJ2XY(ij);
+  return this.cellIsUnderAttack(xy);
+};
+
+Grid.prototype.kingIsUnderAttackAfterMove = function(move){
+  var color = this.activeColor;
+  var tmpGrid = clone(this);
+  tmpGrid.move(move);
+  tmpGrid.switchPlayer();
+  if (tmpGrid.kingIsUnderAttack(color)){
+    console.log(color + ": king is under attack!");
+    return true;
+  }
   return false;
 };
 
@@ -513,9 +547,6 @@ Grid.prototype.move = function(move){
     this.enpass = xy2.x+(xy2.y+1);
     console.log("enpass    " + this.enpass);
   }
-
-  //TODO check castling
-  //if (this.getCellValue(ij1) == "R" && xy1=={x:})
 
   //enpass pown
   if ( /[Pp]/.test(this.getCellValue(ij1)) && j1!=j2 && !this.getCellValue(ij2)){
@@ -554,11 +585,14 @@ Grid.prototype.move = function(move){
 
   //pown promotion
   var value = this.cells[i1][j1].value;
-  if (move.length >4 && /[Pp]/.test(this.getCellValue(ij1)))
+  if (move.length >4 && /[Pp]/.test(this.getCellValue(ij1))){
     value = move[4];
-    if (this.activeColor === "w")
+    if (this.activeColor === "w") {
       value = value.toUpperCase();
-
+    }else {
+      value = value.toLowerCase();
+    }
+  }
 
  //normal move
   this.cells[i2][j2] = new Tile(xy2,value);
